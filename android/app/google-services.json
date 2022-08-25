@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "154285814531",
+    "project_id": "flutter-tutorial-cf212",
+    "storage_bucket": "flutter-tutorial-cf212.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:154285814531:android:9219aa8562cf9b41932f36",
+        "android_client_info": {
+          "package_name": "com.example.firebase_signup"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "154285814531-8nmvg7jq2m5tv7b3h6njir6hbg82477j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGJ4bjcTuRuGkT04fdS5ZuPBtCHmfnHlE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "154285814531-8nmvg7jq2m5tv7b3h6njir6hbg82477j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
