@@ -2,10 +2,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_signup/landing_page.dart';
-import 'package:firebase_signup/signup.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'home.dart';
 
 class SigninWithPhone extends StatefulWidget {
   static const routeName = 'SigninWithPhone';
@@ -37,19 +34,16 @@ class _SigninWithPhoneState extends State<SigninWithPhone> {
     UserCredential _credential;
     //var valid = _formKey.currentState.validate();
     User user;
-    
+
     try {
-      
       await _auth.verifyPhoneNumber(
         phoneNumber: '+91' + _mobileController.text.trim(),
         verificationCompleted: (PhoneAuthCredential authCredential) async {
           print('AUTH CREDENTIAL');
           print(authCredential);
           await _auth.signInWithCredential(authCredential).then((value) {
-            if (value != null) {
-              print(value);
-              Navigator.pushNamed(context, LandingPage.routeName);
-            }
+            print(value);
+            Navigator.pushNamed(context, LandingPage.routeName);
           });
         },
         verificationFailed: ((error) {
@@ -106,7 +100,6 @@ class _SigninWithPhoneState extends State<SigninWithPhone> {
         ),
       );
     } catch (e) {}
-    
   }
 
   @override

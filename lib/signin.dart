@@ -5,6 +5,7 @@ import 'package:firebase_signup/signup.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'home.dart';
+import 'landing_page.dart';
 
 class Signin extends StatefulWidget {
   static const routeName = 'signin';
@@ -136,9 +137,12 @@ class _SigninState extends State<Signin> {
 
       if (user != null) {
         print('User name ' + user.displayName);
-        if (user != null) {
-          Navigator.pushNamed(context, Home.routeName);
-        }
+        var googleAuth = await user.authentication;
+
+        var credential = GoogleAuthProvider.credential(
+            idToken: googleAuth.idToken, accessToken: googleAuth.accessToken);
+        FirebaseAuth.instance.signInWithCredential(credential);
+        Navigator.pushNamed(context, LandingPage.routeName);
       } else {
         print('Sign in failed');
       }
@@ -164,42 +168,42 @@ class _SigninState extends State<Signin> {
                 SizedBox(
                   height: MediaQuery.of(context).size.height * 0.05,
                 ),
-                Container(
-                  width: MediaQuery.of(context).size.width * 0.9,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(
-                      15,
-                    ),
-                  ),
-                  child: TextFormField(
-                    keyboardType: TextInputType.phone,
-                    decoration: InputDecoration(
-                      labelText: 'Mobile Number',
-                    ),
-                    controller: _mobileController,
-                    validator: (value) {
-                      if (value.isEmpty) {
-                        return "Please enter mobile";
-                      }
-                      if (!value.contains('@')) {
-                        return "Invalid mobile number";
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: _signInWithMobileNumber,
-                  child: Text(
-                    'Send OTP ',
-                  ),
-                ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.08,
-                ),
-                Center(
-                  child: Text('or'),
-                ),
+                // Container(
+                //   width: MediaQuery.of(context).size.width * 0.9,
+                //   decoration: BoxDecoration(
+                //     borderRadius: BorderRadius.circular(
+                //       15,
+                //     ),
+                //   ),
+                //   child: TextFormField(
+                //     keyboardType: TextInputType.phone,
+                //     decoration: InputDecoration(
+                //       labelText: 'Mobile Number',
+                //     ),
+                //     controller: _mobileController,
+                //     validator: (value) {
+                //       if (value.isEmpty) {
+                //         return "Please enter mobile";
+                //       }
+                //       if (!value.contains('@')) {
+                //         return "Invalid mobile number";
+                //       }
+                //       return null;
+                //     },
+                //   ),
+                // ),
+                // ElevatedButton(
+                //   onPressed: _signInWithMobileNumber,
+                //   child: Text(
+                //     'Send OTP ',
+                //   ),
+                // ),
+                // SizedBox(
+                //   height: MediaQuery.of(context).size.height * 0.08,
+                // ),
+                // Center(
+                //   child: Text('or'),
+                // ),
                 Container(
                   width: MediaQuery.of(context).size.width * 0.9,
                   decoration: BoxDecoration(
