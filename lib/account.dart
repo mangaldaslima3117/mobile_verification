@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firabase_storage;
@@ -12,8 +14,9 @@ class Account extends StatefulWidget {
 class _AccountState extends State<Account> {
   String defaultImageUrl =
       'https://cdn.pixabay.com/photo/2016/03/23/15/00/ice-cream-1274894_1280.jpg';
-  String selectedFileName = '';
+  String selctFile = '';
   XFile file;
+  Uint8List selectedImageInBytes;
 
   //This modal shows image selection either from gallery or camera
   void _showPicker(BuildContext context) {
@@ -69,16 +72,15 @@ class _AccountState extends State<Account> {
   }
 
   _selectFile(bool imageFrom) async {
-    file = await ImagePicker().pickImage(
-      source: imageFrom ? ImageSource.gallery : ImageSource.camera,
-    );
+    FilePickerResult fileResult = await FilePicker.platform.pickFiles();
 
-    if (file != null) {
+    if (fileResult != null) {
       setState(() {
-        selectedFileName = file.name;
+        selctFile = fileResult.files.first.name;
+        selectedImageInBytes = fileResult.files.first.bytes;
       });
     }
-    print(file.name);
+    print(selctFile);
   }
 
   _uploadFile() async {
@@ -88,9 +90,13 @@ class _AccountState extends State<Account> {
       firabase_storage.Reference ref = firabase_storage.FirebaseStorage.instance
           .ref()
           .child('product')
-          .child('/' + file.name);
+          .child('/' + selctFile);
 
-      uploadTask = ref.putFile(File(file.path));
+      final metadata =
+          firabase_storage.SettableMetadata(contentType: 'image/jpeg');
+
+      //uploadTask = ref.putFile(File(file.path));
+      uploadTask = ref.putData(selectedImageInBytes, metadata);
 
       await uploadTask.whenComplete(() => null);
       String imageUrl = await ref.getDownloadURL();
@@ -105,7 +111,7 @@ class _AccountState extends State<Account> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Upload Image Demo',
+          'Flutter Demo',
         ),
       ),
       body: SingleChildScrollView(
@@ -118,23 +124,25 @@ class _AccountState extends State<Account> {
                 height: MediaQuery.of(context).size.height * 0.02,
               ),
               Container(
-                height: MediaQuery.of(context).size.height * 0.2,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(
-                    15,
+                  height: MediaQuery.of(context).size.height * 0.2,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(
+                      15,
+                    ),
                   ),
-                ),
-                child: selectedFileName.isEmpty
-                    ? Image.network(
-                        defaultImageUrl,
-                        fit: BoxFit.cover,
-                      )
-                    // Image.asset('assets/create_menu_default.png')
-                    : Image.file(
-                        File(file.path),
-                        fit: BoxFit.fill,
-                      ),
-              ),
+                  child: selctFile.isEmpty
+                      ? Image.network(
+                          defaultImageUrl,
+                          fit: BoxFit.cover,
+                        )
+                      // Image.asset('assets/create_menu_default.png')
+                      : Image.memory(selectedImageInBytes)
+
+                  // Image.file(
+                  //     File(file.path),
+                  //     fit: BoxFit.fill,
+                  //   ),
+                  ),
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.02,
               ),
@@ -142,7 +150,8 @@ class _AccountState extends State<Account> {
                 height: MediaQuery.of(context).size.height * 0.05,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    _showPicker(context);
+                    //_showPicker(context);
+                    _selectFile(true);
                   },
                   icon: const Icon(
                     Icons.camera,

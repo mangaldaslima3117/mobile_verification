@@ -13,7 +13,15 @@ import 'account.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   //await Firebase.initializeApp();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: FirebaseOptions(
+      apiKey: 'AIzaSyBGJ4bjcTuRuGkT04fdS5ZuPBtCHmfnHlE',
+      appId: '1:154285814531:android:9219aa8562cf9b41932f36',
+      messagingSenderId: '',
+      projectId: 'flutter-tutorial-cf212',
+      storageBucket: "flutter-tutorial-cf212.appspot.com",
+    ),
+  );
   runApp(MyApp());
 }
 
@@ -30,7 +38,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Flutter Demo 2',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
