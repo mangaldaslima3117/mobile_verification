@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_signup/home.dart';
 import 'package:firebase_signup/landing_page.dart';
+import 'package:firebase_signup/page/item_list_page.dart';
 import 'package:firebase_signup/signin.dart';
 import 'package:firebase_signup/signin_with_phone.dart';
 import 'package:firebase_signup/signup.dart';
@@ -64,8 +65,8 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Account(),
-
+      //body: Account(),
+      body: ItemListPage()
       // body: StreamBuilder(
       //   stream: FirebaseAuth.instance.authStateChanges(),
       //   builder: (context, snapshot) {

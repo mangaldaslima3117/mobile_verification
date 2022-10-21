@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_signup/page/item_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firabase_storage;
@@ -17,6 +19,16 @@ class _AccountState extends State<Account> {
   String selctFile = '';
   XFile file;
   Uint8List selectedImageInBytes;
+  TextEditingController _itemNameController = TextEditingController();
+  TextEditingController _itemPriceController = TextEditingController();
+  bool isItemSaved = false;
+
+  @override
+  void dispose() {
+    _itemNameController.dispose();
+    _itemPriceController.dispose();
+    super.dispose();
+  }
 
   //This modal shows image selection either from gallery or camera
   void _showPicker(BuildContext context) {
@@ -83,7 +95,8 @@ class _AccountState extends State<Account> {
     print(selctFile);
   }
 
-  _uploadFile() async {
+  Future<String> _uploadFile() async {
+    String imageUrl = '';
     try {
       firabase_storage.UploadTask uploadTask;
 
@@ -99,11 +112,31 @@ class _AccountState extends State<Account> {
       uploadTask = ref.putData(selectedImageInBytes, metadata);
 
       await uploadTask.whenComplete(() => null);
-      String imageUrl = await ref.getDownloadURL();
-      print('Uploaded Image URL ' + imageUrl);
+      imageUrl = await ref.getDownloadURL();
     } catch (e) {
       print(e);
     }
+    return imageUrl;
+  }
+
+  saveItem() async {
+    setState(() {
+      isItemSaved = true;
+    });
+    String imageUrl = await _uploadFile();
+    print('Uploaded Image URL ' + imageUrl);
+    await FirebaseFirestore.instance.collection('vegetables').add({
+      'itemName': _itemNameController.text,
+      'itemPrice': _itemPriceController.text,
+      'itemImageUrl': imageUrl,
+      'createdOn': DateTime.now().toIso8601String(),
+    }).then((value) {
+      setState(() {
+        isItemSaved = false;
+      });
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: ((context) => ItemListPage())));
+    });
   }
 
   @override
@@ -111,7 +144,7 @@ class _AccountState extends State<Account> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Flutter Demo',
+          'Vegetable Seller',
         ),
       ),
       body: SingleChildScrollView(
@@ -124,7 +157,8 @@ class _AccountState extends State<Account> {
                 height: MediaQuery.of(context).size.height * 0.02,
               ),
               Container(
-                  height: MediaQuery.of(context).size.height * 0.2,
+                  height: MediaQuery.of(context).size.height * 0.35,
+                  width: MediaQuery.of(context).size.width * 0.3,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(
                       15,
@@ -157,7 +191,7 @@ class _AccountState extends State<Account> {
                     Icons.camera,
                   ),
                   label: const Text(
-                    'Chose Image',
+                    'Pick Image',
                     style: TextStyle(),
                   ),
                 ),
@@ -165,19 +199,124 @@ class _AccountState extends State<Account> {
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.02,
               ),
+              if (isItemSaved)
+                Container(
+                  child: CircularProgressIndicator(
+                    color: Colors.green,
+                  ),
+                ),
+              Container(
+                height: MediaQuery.of(context).size.height * 0.1,
+                width: MediaQuery.of(context).size.width * 0.3,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(
+                    25,
+                  ),
+                ),
+                child: TextField(
+                  cursorColor: Colors.black,
+                  decoration: InputDecoration(
+                    hintStyle: TextStyle(
+                      color: Colors.black,
+                    ),
+                    border: new OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        15,
+                      ),
+                      borderSide: new BorderSide(
+                        color: Colors.black,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: new BorderSide(
+                        color: Colors.black,
+                        width: 1,
+                      ),
+                    ),
+                    labelText: 'Item Name',
+                    labelStyle: TextStyle(
+                      color: Colors.black,
+                    ),
+                  ),
+                  controller: _itemNameController,
+                  style: TextStyle(
+                    color: Colors.black,
+                  ),
+                ),
+              ),
               SizedBox(
-                height: MediaQuery.of(context).size.height * 0.05,
-                child: TextButton(
-                  onPressed: () {
-                    _uploadFile();
-                  },
-                  child: const Text(
-                    'Upload',
-                    style: TextStyle(),
+                height: MediaQuery.of(context).size.height * 0.02,
+              ),
+              Container(
+                height: MediaQuery.of(context).size.height * 0.1,
+                width: MediaQuery.of(context).size.width * 0.3,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(
+                    25,
+                  ),
+                ),
+                child: TextField(
+                  cursorColor: Colors.black,
+                  decoration: InputDecoration(
+                    hintStyle: TextStyle(
+                      color: Colors.black,
+                    ),
+                    border: new OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        15,
+                      ),
+                      borderSide: new BorderSide(
+                        color: Colors.black,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: new BorderSide(
+                        color: Colors.black,
+                        width: 1,
+                      ),
+                    ),
+                    labelText: 'Item Price',
+                    labelStyle: TextStyle(
+                      color: Colors.black,
+                    ),
+                  ),
+                  controller: _itemPriceController,
+                  style: TextStyle(
+                    color: Colors.black,
                   ),
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+      floatingActionButton: Container(
+        width: MediaQuery.of(context).size.width * 0.08,
+        margin: EdgeInsets.only(
+          bottom: MediaQuery.of(context).size.height * 0.02,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.green,
+          borderRadius: BorderRadius.circular(
+            25,
+          ),
+          // border: Border.all(
+          //   width: 1,
+          //   //color: Colors.black,
+          // ),
+        ),
+        child: TextButton(
+          onPressed: () {
+            saveItem();
+          },
+          child: Text(
+            'Save',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.white,
+            ),
           ),
         ),
       ),
