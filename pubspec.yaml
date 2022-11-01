@@ -38,6 +38,7 @@ dependencies:
   #Image upload
   image_picker: ^0.8.5+3
   firebase_storage: ^11.0.1
+  firebase_messaging: ^14.0.3
 
 
 dev_dependencies:
