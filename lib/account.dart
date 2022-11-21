@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_signup/page/item_list_page.dart';
@@ -19,6 +20,9 @@ class _AccountState extends State<Account> {
   String selctFile = '';
   XFile file;
   Uint8List selectedImageInBytes;
+  List<Uint8List> pickedImagesInBytes = [];
+  List<String> imageUrls = [];
+  int imageCounts = 0;
   TextEditingController _itemNameController = TextEditingController();
   TextEditingController _itemPriceController = TextEditingController();
   bool isItemSaved = false;
@@ -84,12 +88,17 @@ class _AccountState extends State<Account> {
   }
 
   _selectFile(bool imageFrom) async {
-    FilePickerResult fileResult = await FilePicker.platform.pickFiles();
+    FilePickerResult fileResult =
+        await FilePicker.platform.pickFiles(allowMultiple: true);
 
     if (fileResult != null) {
-      setState(() {
-        selctFile = fileResult.files.first.name;
-        selectedImageInBytes = fileResult.files.first.bytes;
+      selctFile = fileResult.files.first.name;
+      fileResult.files.forEach((element) {
+        setState(() {
+          pickedImagesInBytes.add(element.bytes);
+          //selectedImageInBytes = fileResult.files.first.bytes;
+          imageCounts += 1;
+        });
       });
     }
     print(selctFile);
@@ -119,16 +128,47 @@ class _AccountState extends State<Account> {
     return imageUrl;
   }
 
+  Future<String> _uploadMultipleFiles(String itemName) async {
+    String imageUrl = '';
+    try {
+      for (var i = 0; i < imageCounts; i++) {
+        firabase_storage.UploadTask uploadTask;
+
+        firabase_storage.Reference ref = firabase_storage
+            .FirebaseStorage.instance
+            .ref()
+            .child('product')
+            .child('/' + itemName + '_' + i.toString());
+
+        final metadata =
+            firabase_storage.SettableMetadata(contentType: 'image/jpeg');
+
+        //uploadTask = ref.putFile(File(file.path));
+        uploadTask = ref.putData(pickedImagesInBytes[i], metadata);
+
+        await uploadTask.whenComplete(() => null);
+        imageUrl = await ref.getDownloadURL();
+        setState(() {
+          imageUrls.add(imageUrl);
+        });
+      }
+    } catch (e) {
+      print(e);
+    }
+    return imageUrl;
+  }
+
   saveItem() async {
     setState(() {
       isItemSaved = true;
     });
-    String imageUrl = await _uploadFile();
-    print('Uploaded Image URL ' + imageUrl);
+    //String imageUrl = await _uploadFile();
+    await _uploadMultipleFiles(_itemNameController.text);
+    print('Uploaded Image URL ' + imageUrls.length.toString());
     await FirebaseFirestore.instance.collection('vegetables').add({
       'itemName': _itemNameController.text,
       'itemPrice': _itemPriceController.text,
-      'itemImageUrl': imageUrl,
+      'itemImageUrl': imageUrls,
       'createdOn': DateTime.now().toIso8601String(),
     }).then((value) {
       setState(() {
@@ -170,7 +210,23 @@ class _AccountState extends State<Account> {
                           fit: BoxFit.cover,
                         )
                       // Image.asset('assets/create_menu_default.png')
-                      : Image.memory(selectedImageInBytes)
+                      : CarouselSlider(
+                          options: CarouselOptions(height: 400.0),
+                          items: pickedImagesInBytes.map((i) {
+                            return Builder(
+                              builder: (BuildContext context) {
+                                return Container(
+                                  width: MediaQuery.of(context).size.width,
+                                  margin: EdgeInsets.symmetric(horizontal: 5.0),
+                                  decoration:
+                                      BoxDecoration(color: Colors.amber),
+                                  child: Image.memory(i),
+                                );
+                              },
+                            );
+                          }).toList(),
+                        )
+                  //Image.memory(selectedImageInBytes)
 
                   // Image.file(
                   //     File(file.path),
