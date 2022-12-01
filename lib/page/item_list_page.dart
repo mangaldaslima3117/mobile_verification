@@ -29,86 +29,41 @@ class _ItemListPageState extends State<ItemListPage> {
             return CircularProgressIndicator();
           }
           if (snapshot.hasData) {
-            return Container(
-              child: snapshot.data.docs.length > 0
-                  ? GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        mainAxisSpacing: 0.02,
-                        crossAxisSpacing: 0.02,
+            return LayoutBuilder(builder: (context, constraints) {
+              return constraints.maxWidth < 600
+                  ? Container(
+                      child: ListView.builder(
+                        itemCount: snapshot.data.docs.length,
+                        itemBuilder: ((context, index) {
+                          return cartItemWidget(context, snapshot, index);
+                        }),
                       ),
-                      itemCount: snapshot.data.docs.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return Card(
-                          //color: Colors.amber[200],
-                          child: Center(
-                              child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                child: CarouselSlider(
-                                  options: CarouselOptions(height: MediaQuery.of(context).size.height * 0.3,),
-                                  items: new List<String>.from(snapshot
-                                          .data.docs[index]['itemImageUrl'])
-                                      .map((i) {
-                                    return Builder(
-                                      builder: (BuildContext context) {
-                                        return Container(
-                                          width:
-                                              MediaQuery.of(context).size.width,
-                                          margin: EdgeInsets.symmetric(
-                                              horizontal: 5.0),
-                                          decoration: BoxDecoration(
-                                              image: DecorationImage(
-                                                  image: NetworkImage(i))),
-                                        );
-                                      },
-                                    );
-                                  }).toList(),
-                                ),
-                              )
-                              // Container(
-                              //   height:
-                              //       MediaQuery.of(context).size.height * 0.4,
-                              //   width: MediaQuery.of(context).size.width * 0.3,
-                              //   decoration: BoxDecoration(
-                              //     image: DecorationImage(
-                              //       image: NetworkImage(snapshot
-                              //           .data.docs[index]['itemImageUrl']
-                              //           .toString()),
-                              //     ),
-                              //   ),
-                              // ),
-                              ,
-                              Container(
-                                child: Text(
-                                    '${snapshot.data.docs[index]['itemName']}'),
+                    )
+                  : Container(
+                      child: snapshot.data.docs.length > 0
+                          ? GridView.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 4,
+                                mainAxisSpacing: 0.02,
+                                crossAxisSpacing: 0.02,
                               ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
+                              itemCount: snapshot.data.docs.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                return cartItemWidget(context, snapshot, index);
+                              })
+                          : Container(
+                              child: Center(
                                 child: Text(
-                                  'Price : \u{20B9}${snapshot.data.docs[index]['itemPrice']}',
+                                  'No item found',
                                   style: TextStyle(
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 22,
                                   ),
                                 ),
-                              )
-                            ],
-                          )),
-                        );
-                      })
-                  : Container(
-                      child: Center(
-                        child: Text(
-                          'No item found',
-                          style: TextStyle(
-                            fontSize: 22,
-                          ),
-                        ),
-                      ),
-                    ),
-            );
+                              ),
+                            ),
+                    );
+            });
           } else {
             return Container();
           }
@@ -116,7 +71,7 @@ class _ItemListPageState extends State<ItemListPage> {
       ),
       floatingActionButton: Container(
         height: MediaQuery.of(context).size.height * 0.06,
-        width: MediaQuery.of(context).size.width * 0.1,
+        //width: MediaQuery.of(context).size.width * 0.1,
         margin: EdgeInsets.only(
           bottom: MediaQuery.of(context).size.height * 0.02,
         ),
@@ -144,6 +99,52 @@ class _ItemListPageState extends State<ItemListPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Card cartItemWidget(
+      BuildContext context, AsyncSnapshot<dynamic> snapshot, int index) {
+    return Card(
+      //color: Colors.amber[200],
+      child: Center(
+          child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            child: CarouselSlider(
+              options: CarouselOptions(
+                height: MediaQuery.of(context).size.height * 0.3,
+              ),
+              items: new List<String>.from(
+                      snapshot.data.docs[index]['itemImageUrl'])
+                  .map((i) {
+                return Builder(
+                  builder: (BuildContext context) {
+                    return Container(
+                      width: MediaQuery.of(context).size.width,
+                      margin: EdgeInsets.symmetric(horizontal: 5.0),
+                      decoration: BoxDecoration(
+                          image: DecorationImage(image: NetworkImage(i))),
+                    );
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+          Container(
+            child: Text('${snapshot.data.docs[index]['itemName']}'),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'Price : \u{20B9}${snapshot.data.docs[index]['itemPrice']}',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          )
+        ],
+      )),
     );
   }
 }

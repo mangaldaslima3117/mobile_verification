@@ -8,9 +8,21 @@ import 'package:firebase_signup/signin.dart';
 import 'package:firebase_signup/signin_with_phone.dart';
 import 'package:firebase_signup/signup.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'account.dart';
+
+AndroidNotificationChannel channel = const AndroidNotificationChannel(
+  'high_importance_channel', // id
+  'High Importance Notifications', // title
+  description:
+      'This channel is used for important notifications.', // description
+  importance: Importance.high,
+);
+
+FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -79,21 +91,38 @@ class _MainPageState extends State<MainPage> {
     RemoteNotification notification = message.notification;
     AndroidNotification android = message.notification?.android;
     print('NOTIFICATION TITLE ' + notification.title.toString());
-    showModalBottomSheet(
-      context: context,
-      builder: ((context) {
-        return Container(
-          child: Column(
-            children: [
-              Text(notification.title),
-              Text(
-                notification.body,
-              ),
-            ],
+    if (notification != null && android != null) {
+      flutterLocalNotificationsPlugin.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            channel.id,
+            channel.name,
+            channelDescription: channel.description,
+            // TODO add a proper drawable resource to android, for now using
+            //      one that already exists in example app.
+            icon: 'launch_background',
           ),
-        );
-      }),
-    );
+        ),
+      );
+    }
+    // showModalBottomSheet(
+    //   context: context,
+    //   builder: ((context) {
+    //     return Container(
+    //       child: Column(
+    //         children: [
+    //           Text(notification.title),
+    //           Text(
+    //             notification.body,
+    //           ),
+    //         ],
+    //       ),
+    //     );
+    //   }),
+    // );
   }
 
   @override

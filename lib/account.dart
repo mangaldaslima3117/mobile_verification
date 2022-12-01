@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -8,6 +9,7 @@ import 'package:firebase_signup/page/item_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firabase_storage;
+import 'package:http/http.dart' as http;
 
 class Account extends StatefulWidget {
   @override
@@ -25,7 +27,15 @@ class _AccountState extends State<Account> {
   int imageCounts = 0;
   TextEditingController _itemNameController = TextEditingController();
   TextEditingController _itemPriceController = TextEditingController();
+  TextEditingController _deviceTokenController = TextEditingController();
   bool isItemSaved = false;
+
+
+  @override
+  void initState() {
+    //deleteVegetable();
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -171,12 +181,48 @@ class _AccountState extends State<Account> {
       'itemImageUrl': imageUrls,
       'createdOn': DateTime.now().toIso8601String(),
     }).then((value) {
+      sendPushMessage();
       setState(() {
         isItemSaved = false;
       });
       Navigator.of(context)
           .push(MaterialPageRoute(builder: ((context) => ItemListPage())));
     });
+  }
+
+  String constructFCMPayload(String token) {
+    return jsonEncode({
+      'to': token,
+      'data': {
+        'via': 'FlutterFire Cloud Messaging!!!',
+      },
+      'notification': {
+        'title': 'Your item  ${_itemNameController.text} is added successfully !',
+        'body': 'Please subscribe, like and share this tutorial !',
+      },
+    });
+  }
+
+  Future<void> sendPushMessage() async {
+    if (_deviceTokenController.text == null) {
+      print('Unable to send FCM message, no token exists.');
+      return;
+    }
+
+    try {
+      String serverKey = "AAAA0RJf2UE:APA91bE_M-axKmqqoV5EinizvWP4T9bOkmCXAwU8JPFCEQsVCZXBdgsX2Nq_coDtvo49ULywfLtzorKS0TlB-1LxNQhFZRBrbk6hcoD0fgHy-i3ed0ehx7yDaHxYLzjXAt7vO2XDMIBD";
+      await http.post(
+        Uri.parse('https://fcm.googleapis.com/fcm/send'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'key=$serverKey'
+        },
+        body: constructFCMPayload(_deviceTokenController.text),
+      );
+      print('FCM request for device sent!');
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
@@ -339,6 +385,49 @@ class _AccountState extends State<Account> {
                     ),
                   ),
                   controller: _itemPriceController,
+                  style: TextStyle(
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.02,
+              ),
+              Container(
+                height: MediaQuery.of(context).size.height * 0.1,
+                width: MediaQuery.of(context).size.width * 0.8,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(
+                    25,
+                  ),
+                ),
+                child: TextField(
+                  cursorColor: Colors.black,
+                  decoration: InputDecoration(
+                    hintStyle: TextStyle(
+                      color: Colors.black,
+                    ),
+                    border: new OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        15,
+                      ),
+                      borderSide: new BorderSide(
+                        color: Colors.black,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: new BorderSide(
+                        color: Colors.black,
+                        width: 1,
+                      ),
+                    ),
+                    labelText: 'Device token',
+                    labelStyle: TextStyle(
+                      color: Colors.black,
+                    ),
+                  ),
+                  controller: _deviceTokenController,
                   style: TextStyle(
                     color: Colors.black,
                   ),
