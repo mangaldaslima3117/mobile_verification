@@ -19,7 +19,7 @@ class _ItemListPageState extends State<ItemListPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Vegetables',
+          'Books',
         ),
       ),
       body: StreamBuilder(

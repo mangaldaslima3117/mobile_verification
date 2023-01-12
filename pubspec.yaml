@@ -41,6 +41,7 @@ dependencies:
   firebase_storage: ^11.0.1
   firebase_messaging: ^14.0.3
   flutter_local_notifications: ^12.0.4
+  syncfusion_flutter_pdfviewer: ^20.4.43
 
 dev_dependencies:
   flutter_test:

@@ -12,6 +12,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'account.dart';
+import 'page/book_list_mobile.dart';
 
 AndroidNotificationChannel channel = const AndroidNotificationChannel(
   'high_importance_channel', // id
@@ -61,7 +62,7 @@ class _MyAppState extends State<MyApp> {
         Home.routeName: (ctx) => Home(),
         Signup.routeName: (ctx) => Signup(),
         Signin.routeName: (ctx) => Signin(),
-        LandingPage.routeName: (ctx) => LandingPage()
+        BookListMobile.routeName: (ctx) => BookListMobile()
       },
     );
   }
@@ -128,8 +129,7 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        //body: Account(),
-        body: ItemListPage()
+        body: BookListMobile()
         // body: StreamBuilder(
         //   stream: FirebaseAuth.instance.authStateChanges(),
         //   builder: (context, snapshot) {
