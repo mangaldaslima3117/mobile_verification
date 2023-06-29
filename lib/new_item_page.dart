@@ -5,30 +5,27 @@ import 'dart:typed_data';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:firebase_signup/page/book_list_mobile.dart';
 import 'package:firebase_signup/page/item_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firabase_storage;
 import 'package:http/http.dart' as http;
 
-class NewBook extends StatefulWidget {
+class NewItemPage extends StatefulWidget {
   @override
-  State<NewBook> createState() => _NewBookState();
+  State<NewItemPage> createState() => _NewItemPageState();
 }
 
-class _NewBookState extends State<NewBook> {
+class _NewItemPageState extends State<NewItemPage> {
   String defaultImageUrl =
       'https://cdn.pixabay.com/photo/2016/03/23/15/00/ice-cream-1274894_1280.jpg';
-  String selctFile = '';
-  String bookName = '';
+  String selectedFile = '';
   XFile file;
-  Uint8List selectedBookImageInBytes;
-  Uint8List selectedBookPdfInBytes;
+  Uint8List selectedImageInBytes;
   List<Uint8List> pickedImagesInBytes = [];
   List<String> imageUrls = [];
   int imageCounts = 0;
-  TextEditingController _bookNameController = TextEditingController();
+  TextEditingController _itemNameController = TextEditingController();
   TextEditingController _itemPriceController = TextEditingController();
   TextEditingController _deviceTokenController = TextEditingController();
   bool isItemSaved = false;
@@ -41,7 +38,7 @@ class _NewBookState extends State<NewBook> {
 
   @override
   void dispose() {
-    _bookNameController.dispose();
+    _itemNameController.dispose();
     _itemPriceController.dispose();
     super.dispose();
   }
@@ -99,42 +96,38 @@ class _NewBookState extends State<NewBook> {
     );
   }
 
-  _selectFile(bool isPickingImage) async {
+  _selectFile(bool imageFrom) async {
     FilePickerResult fileResult =
-        await FilePicker.platform.pickFiles(type: FileType.any);
+        await FilePicker.platform.pickFiles(allowMultiple: true);
 
     if (fileResult != null) {
-      print(fileResult);
-
-      File file = File(fileResult.files.single.path);
-      setState(() {
-        if (isPickingImage) {
-          selctFile = fileResult.files.first.name;
-          selectedBookImageInBytes = file.readAsBytesSync();
-        } else {
-          bookName = fileResult.files.first.name;
-          selectedBookPdfInBytes = file.readAsBytesSync();
-        }
+      selectedFile = fileResult.files.first.name;
+      fileResult.files.forEach((element) {
+        setState(() {
+          pickedImagesInBytes.add(element.bytes);
+          //selectedImageInBytes = fileResult.files.first.bytes;
+          imageCounts += 1;
+        });
       });
     }
-    print('LENGTH OF SELECTED IMAGE ${selectedBookImageInBytes.length}');
+    print(selectedFile);
   }
 
-  Future<String> _uploadFile(Uint8List fileToUpload, bool isImageFile) async {
+  Future<String> _uploadFile() async {
     String imageUrl = '';
     try {
       firabase_storage.UploadTask uploadTask;
 
       firabase_storage.Reference ref = firabase_storage.FirebaseStorage.instance
           .ref()
-          .child('books')
-          .child('/' + (isImageFile ? selctFile : bookName));
+          .child('product')
+          .child('/' + selectedFile);
 
-      final metadata = firabase_storage.SettableMetadata(
-          contentType: isImageFile ? 'image/jpeg' : 'application/pdf');
+      final metadata =
+          firabase_storage.SettableMetadata(contentType: 'image/jpeg');
 
       //uploadTask = ref.putFile(File(file.path));
-      uploadTask = ref.putData(fileToUpload, metadata);
+      uploadTask = ref.putData(selectedImageInBytes, metadata);
 
       await uploadTask.whenComplete(() => null);
       imageUrl = await ref.getDownloadURL();
@@ -178,26 +171,20 @@ class _NewBookState extends State<NewBook> {
     setState(() {
       isItemSaved = true;
     });
-    String imageUrl = await _uploadFile(selectedBookImageInBytes, true);
-    String pdfUrl = await _uploadFile(selectedBookPdfInBytes, false);
-    //await _uploadMultipleFiles(_bookNameController.text);
-    //print('Uploaded Image URL ' + imageUrls.length.toString());
-    await FirebaseFirestore.instance.collection('books').add({
-      'bookName': _bookNameController.text,
-      'authorName': _itemPriceController.text,
-      'bookCoverImageUrl': imageUrl,
-      'bookPdfUrl': pdfUrl,
+    //String imageUrl = await _uploadFile();
+    await _uploadMultipleFiles(_itemNameController.text);
+    print('Uploaded Image URL ' + imageUrls.length.toString());
+    await FirebaseFirestore.instance.collection('vegetables').add({
+      'itemName': _itemNameController.text,
+      'itemPrice': _itemPriceController.text,
+      'itemImageUrl': imageUrls,
       'createdOn': DateTime.now().toIso8601String(),
     }).then((value) {
-      sendPushMessage();
       setState(() {
         isItemSaved = false;
       });
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => BookListMobile()),
-        (Route<dynamic> route) => false,
-      );
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: ((context) => ItemListPage())));
     });
   }
 
@@ -209,7 +196,7 @@ class _NewBookState extends State<NewBook> {
       },
       'notification': {
         'title':
-            'Your item  ${_bookNameController.text} is added successfully !',
+            'Your item  ${_itemNameController.text} is added successfully !',
         'body': 'Please subscribe, like and share this tutorial !',
       },
     });
@@ -243,7 +230,7 @@ class _NewBookState extends State<NewBook> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'New Book',
+          'Vegetable Seller',
         ),
       ),
       body: SingleChildScrollView(
@@ -256,20 +243,36 @@ class _NewBookState extends State<NewBook> {
                 height: MediaQuery.of(context).size.height * 0.02,
               ),
               Container(
-                  height: MediaQuery.of(context).size.height * 0.25,
-                  width: MediaQuery.of(context).size.width * 0.5,
+                  height: MediaQuery.of(context).size.height * 0.35,
+                  width: MediaQuery.of(context).size.width * 0.3,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(
                       15,
                     ),
                   ),
-                  child: selctFile.isEmpty
+                  child: selectedFile.isEmpty
                       ? Image.network(
                           defaultImageUrl,
                           fit: BoxFit.cover,
                         )
                       // Image.asset('assets/create_menu_default.png')
-                      : Image.memory(selectedBookImageInBytes)
+                      : CarouselSlider(
+                          options: CarouselOptions(height: 400.0),
+                          items: pickedImagesInBytes.map((i) {
+                            return Builder(
+                              builder: (BuildContext context) {
+                                return Container(
+                                  width: MediaQuery.of(context).size.width,
+                                  margin: EdgeInsets.symmetric(horizontal: 5.0),
+                                  decoration:
+                                      BoxDecoration(color: Colors.amber),
+                                  child: Image.memory(i),
+                                );
+                              },
+                            );
+                          }).toList(),
+                        )
+                  //Image.memory(selectedImageInBytes)
 
                   // Image.file(
                   //     File(file.path),
@@ -284,45 +287,17 @@ class _NewBookState extends State<NewBook> {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     //_showPicker(context);
-                    _selectFile(true); //set to false to pick pdf files
+                    _selectFile(true);
                   },
                   icon: const Icon(
                     Icons.camera,
                   ),
                   label: const Text(
-                    'Pick Book Cover Image',
+                    'Pick Image',
                     style: TextStyle(),
                   ),
                 ),
               ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.02,
-              ),
-              Container(
-                height: MediaQuery.of(context).size.height * 0.05,
-                child: ElevatedButton.icon(
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all(
-                      Colors.orange,
-                    ),
-                  ),
-                  onPressed: () {
-                    //_showPicker(context);
-                    _selectFile(false); //set to false to pick pdf files
-                  },
-                  icon: const Icon(
-                    Icons.picture_as_pdf,
-                  ),
-                  label: const Text(
-                    'Pick Book File',
-                    style: TextStyle(),
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.02,
-              ),
-              Text('Book File Name : ${bookName}'),
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.02,
               ),
@@ -334,7 +309,7 @@ class _NewBookState extends State<NewBook> {
                 ),
               Container(
                 height: MediaQuery.of(context).size.height * 0.1,
-                width: MediaQuery.of(context).size.width * 0.8,
+                width: MediaQuery.of(context).size.width * 0.3,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(
                     25,
@@ -361,20 +336,23 @@ class _NewBookState extends State<NewBook> {
                         width: 1,
                       ),
                     ),
-                    labelText: 'Book Name',
+                    labelText: 'Item Name',
                     labelStyle: TextStyle(
                       color: Colors.black,
                     ),
                   ),
-                  controller: _bookNameController,
+                  controller: _itemNameController,
                   style: TextStyle(
                     color: Colors.black,
                   ),
                 ),
               ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.02,
+              ),
               Container(
                 height: MediaQuery.of(context).size.height * 0.1,
-                width: MediaQuery.of(context).size.width * 0.8,
+                width: MediaQuery.of(context).size.width * 0.3,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(
                     25,
@@ -401,7 +379,7 @@ class _NewBookState extends State<NewBook> {
                         width: 1,
                       ),
                     ),
-                    labelText: 'Author Name',
+                    labelText: 'Item Price',
                     labelStyle: TextStyle(
                       color: Colors.black,
                     ),
@@ -420,7 +398,7 @@ class _NewBookState extends State<NewBook> {
         ),
       ),
       floatingActionButton: Container(
-        width: MediaQuery.of(context).size.width * 0.3,
+        width: MediaQuery.of(context).size.width * 0.08,
         margin: EdgeInsets.only(
           bottom: MediaQuery.of(context).size.height * 0.02,
         ),

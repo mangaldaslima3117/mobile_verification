@@ -1,8 +1,5 @@
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_signup/account.dart';
-import 'package:flutter/src/foundation/key.dart';
-import 'package:flutter/src/widgets/framework.dart';
+import 'package:firebase_signup/new_item_page.dart';
 
 import 'package:flutter/material.dart';
 
@@ -19,7 +16,7 @@ class _ItemListPageState extends State<ItemListPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Books',
+          'Vegetable Shop',
         ),
       ),
       body: StreamBuilder(
@@ -35,7 +32,7 @@ class _ItemListPageState extends State<ItemListPage> {
                       child: ListView.builder(
                         itemCount: snapshot.data.docs.length,
                         itemBuilder: ((context, index) {
-                          return cartItemWidget(context, snapshot, index);
+                          return cartItemWidget(context, snapshot);
                         }),
                       ),
                     )
@@ -50,8 +47,10 @@ class _ItemListPageState extends State<ItemListPage> {
                               ),
                               itemCount: snapshot.data.docs.length,
                               itemBuilder: (BuildContext context, int index) {
-                                return cartItemWidget(context, snapshot, index);
-                              })
+                                return cartItemWidget(
+                                    context, snapshot.data.docs[index]);
+                              },
+                            )
                           : Container(
                               child: Center(
                                 child: Text(
@@ -87,8 +86,11 @@ class _ItemListPageState extends State<ItemListPage> {
         ),
         child: TextButton(
           onPressed: () {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: ((context) => Account())));
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: ((context) => NewItemPage()),
+              ),
+            );
           },
           child: Text(
             'New Item',
@@ -103,48 +105,62 @@ class _ItemListPageState extends State<ItemListPage> {
   }
 
   Card cartItemWidget(
-      BuildContext context, AsyncSnapshot<dynamic> snapshot, int index) {
+    BuildContext context,
+    var snapshot,
+  ) {
     return Card(
       //color: Colors.amber[200],
       child: Center(
-          child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            child: CarouselSlider(
-              options: CarouselOptions(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.2,
                 height: MediaQuery.of(context).size.height * 0.3,
-              ),
-              items: new List<String>.from(
-                      snapshot.data.docs[index]['itemImageUrl'])
-                  .map((i) {
-                return Builder(
-                  builder: (BuildContext context) {
-                    return Container(
-                      width: MediaQuery.of(context).size.width,
-                      margin: EdgeInsets.symmetric(horizontal: 5.0),
-                      decoration: BoxDecoration(
-                          image: DecorationImage(image: NetworkImage(i))),
-                    );
-                  },
-                );
-              }).toList(),
-            ),
-          ),
-          Container(
-            child: Text('${snapshot.data.docs[index]['itemName']}'),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              'Price : \u{20B9}${snapshot.data.docs[index]['itemPrice']}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: NetworkImage(
+                      snapshot['itemImageUrl'][0],
+                    ),
+                  ),
+                ),
               ),
             ),
-          )
-        ],
-      )),
+            Container(
+              child: Text('${snapshot['itemName']}'),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                'Price : \u{20B9}${snapshot['itemPrice']}',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.edit,
+                    color: Colors.orange,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.delete,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
+            )
+          ],
+        ),
+      ),
     );
   }
 }
